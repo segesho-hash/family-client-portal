@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Family Architecture | Client Portal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #333; min-height: 100vh; padding: 20px; }
+        .portal-container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .client-header { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 30px; text-align: center; }
+        .client-welcome { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #f8f9fa; border-bottom: 1px solid #eee; }
+        .client-id-manager { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px; text-align: center; }
+        .share-link { background: #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0; word-break: break-all; font-family: monospace; }
+        .progress-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; padding: 20px; background: white; }
+        .progress-card { background: #f8f9fa; padding: 20px; border-radius: 15px; text-align: center; border-left: 4px solid #667eea; }
+        .module-section { padding: 20px; }
+        .module-card { background: white; border: 2px solid #e9ecef; border-radius: 15px; margin-bottom: 20px; overflow: hidden; transition: all 0.3s ease; }
+        .module-card.active { border-color: #667eea; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2); }
+        .module-header { background: #f8f9fa; padding: 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .module-content { padding: 0 20px; max-height: 0; overflow: hidden; transition: all 0.3s ease; }
+        .module-content.expanded { padding: 20px; max-height: 1000px; }
+        .assignment-item { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 10px; border-left: 4px solid #28a745; }
+        .assignment-item.pending { border-left-color: #ffc107; }
+        .assignment-item.overdue { border-left-color: #dc3545; }
+        .assignment-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; }
+        .btn-primary { background: linear-gradient(45deg, #FF6B6B, #FF8E53); color: white; }
+        .btn-success { background: linear-gradient(45deg, #4CAF50, #8BC34A); color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .progress-bar { background: #e9ecef; height: 10px; border-radius: 10px; margin: 10px 0; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #4CAF50, #8BC34A); height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 10px; background: white; box-shadow: 0 5px 20px rgba(0,0,0,0.2); border-left: 4px solid #4CAF50; transform: translateX(400px); transition: transform 0.3s ease; z-index: 1000; }
+        .notification.show { transform: translateX(0); }
+        .submission-form { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 15px 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        .metrics-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
+        .metric-card { background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="portal-container">
+        <div class="client-header">
+            <h1>🏠 Elite Family Architecture</h1>
+            <div class="subtitle">Your Personal Transformation Portal</div>
+        </div>
+        
+        <div class="client-id-manager">
+            <h3>🔑 Your Client Portal</h3>
+            <div><strong>Client ID:</strong> <span id="displayClientId">Loading...</span></div>
+            <div class="share-link" id="shareLinkContainer">Your personalized portal link will appear here</div>
+            <button class="btn btn-primary" onclick="copyShareLink()">📋 Copy Your Portal Link</button>
+        </div>
+
+        <div class="client-welcome">
+            <div>
+                <h2 id="clientWelcome">Welcome, Family!</h2>
+                <p id="clientPhase">Current Phase: Loading...</p>
+            </div>
+            <div style="text-align: right;">
+                <div id="overallProgress">Overall Progress: 0%</div>
+                <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+            </div>
+        </div>
+        
+        <div class="progress-overview">
+            <div class="progress-card"><div style="font-size: 2em; font-weight: bold; color: #667eea;" id="completedAssignments">0</div><div style="color: #666;">Completed Assignments</div></div>
+            <div class="progress-card"><div style="font-size: 2em; font-weight: bold; color: #28a745;" id="pendingAssignments">0</div><div style="color: #666;">Pending Assignments</div></div>
+            <div class="progress-card"><div style="font-size: 2em; font-weight: bold; color: #ffc107;" id="currentStreak">0</div><div style="color: #666;">Day Streak</div></div>
+            <div class="progress-card"><div style="font-size: 2em; font-weight: bold; color: #6f42c1;" id="sessionCount">0</div><div style="color: #666;">Sessions Completed</div></div>
+        </div>
+        
+        <div class="module-section">
+            <h3 style="margin-bottom: 20px;">🎯 Your Transformation Journey</h3>
+            <div id="modulesContainer"></div>
+        </div>
+        
+        <div class="module-section">
+            <h3 style="margin-bottom: 20px;">📊 Your Progress Metrics</h3>
+            <div class="metrics-display">
+                <div class="metric-card"><div style="font-size: 1.5em; font-weight: bold; color: #667eea;" id="metricCommunication">0/10</div><div style="color: #666;">Communication</div></div>
+                <div class="metric-card"><div style="font-size: 1.5em; font-weight: bold; color: #28a745;" id="metricRespect">0/10</div><div style="color: #666;">Mutual Respect</div></div>
+                <div class="metric-card"><div style="font-size: 1.5em; font-weight: bold; color: #ffc107;" id="metricHarmony">0/10</div><div style="color: #666;">Family Harmony</div></div>
+                <div class="metric-card"><div style="font-size: 1.5em; font-weight: bold; color: #dc3545;" id="metricConflict">0/10</div><div style="color: #666;">Conflict Resolution</div></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+
+    <script>
+        let clientData = null;
+        let currentClientId = null;
+
+        function generateClientId() {
+            const prefix = 'FAM';
+            const part1 = Math.random().toString(36).substr(2, 4).toUpperCase();
+            const part2 = Math.random().toString(36).substr(2, 4).toUpperCase();
+            return `${prefix}-${part1}-${part2}`;
+        }
+
+        function getClientId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let clientId = urlParams.get('clientId');
+            
+            if (!clientId) {
+                clientId = generateClientId();
+                const newUrl = `${window.location.pathname}?clientId=${clientId}`;
+                window.history.replaceState({}, '', newUrl);
+            }
+            
+            return clientId;
+        }
+
+        function updateShareLink() {
+            const currentUrl = window.location.href.split('?')[0];
+            const shareUrl = `${currentUrl}?clientId=${currentClientId}`;
+            document.getElementById('shareLinkContainer').textContent = shareUrl;
+            document.getElementById('displayClientId').textContent = currentClientId;
+        }
+
+        function copyShareLink() {
+            const shareUrl = document
